@@ -11,6 +11,7 @@ pub struct Config {
     pub interval: u64,
     pub matrix_url: String,
     pub redis: RedisConfig,
+    pub log_filter: String,
 }
 
 #[serde_as]

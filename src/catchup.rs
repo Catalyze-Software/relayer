@@ -1,15 +1,19 @@
-use eyre::Context as _Context;
+use eyre::Context as _;
 
-use crate::context::Context;
+use crate::{context::Context, data};
 
 pub async fn run(ctx: &Context) -> eyre::Result<()> {
-    let history_point = ctx
-        .get_history_point()
-        .wrap_err("Failed to get history point during the catchup")?;
+    tracing::debug!("Trying to get history point from the redis");
 
-    if history_point.is_some() {
+    let history_point =
+        data::get_history_point(ctx).wrap_err("Failed to get history point during the catchup")?;
+
+    if let Some(history_point) = history_point {
+        tracing::info!("History point is already set: {history_point}, skipping catchup...");
         return Ok(());
     }
+
+    tracing::info!("History point is not set, starting catchup...");
 
     let _history_point = ctx
         .icp()

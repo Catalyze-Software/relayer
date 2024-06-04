@@ -1,0 +1,9 @@
+log_filter="debug"
+proxy_id="2ut72-xaycq-4u3iu-ut232-pqz7y-httja-ufna4-vmvh3-tc2eb-cof6b-yqe"
+history_id="2ut72-xaycq-4u3iu-ut232-pqz7y-httja-ufna4-vmvh3-tc2eb-cof6b-yqe"
+interval="1"
+matrix_url="https://matrix.org"
+
+[redis]
+url = "redis://localhost:6379"
+queue = "events"

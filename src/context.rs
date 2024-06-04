@@ -1,7 +1,6 @@
-use eyre::Context as _Context;
-use redis::Commands;
+use eyre::Context as _;
 
-use crate::{config::Config, consts::HISTORY_POINT_KEY, icp::ICPClient};
+use crate::{config::Config, icp::ICPClient};
 
 pub struct Context {
     cfg: Config,
@@ -34,18 +33,5 @@ impl Context {
 
     pub fn icp(&self) -> &ICPClient {
         &self.icp
-    }
-
-    pub fn get_history_point(&self) -> eyre::Result<Option<u64>> {
-        let mut redis = self.redis()?;
-        let hp: u64 = redis
-            .get(HISTORY_POINT_KEY)
-            .wrap_err("Failed to get history point")?;
-
-        if hp == 0 {
-            return Ok(None);
-        }
-
-        Ok(Some(hp))
     }
 }
