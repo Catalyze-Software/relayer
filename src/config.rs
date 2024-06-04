@@ -6,12 +6,23 @@ use serde_with::serde_as;
 #[serde_as]
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
+    pub log_filter: String,
+
     pub proxy_id: Principal,
     pub history_id: Principal,
+
     pub interval: u64,
-    pub matrix_url: String,
+    pub limit: u64,
+
     pub redis: RedisConfig,
-    pub log_filter: String,
+    pub matrix_url: String,
+
+    #[serde(default = "default_ic_url")]
+    pub ic_url: String,
+}
+
+fn default_ic_url() -> String {
+    "https://ic0.app".to_string()
 }
 
 #[serde_as]

@@ -14,12 +14,15 @@ pub async fn run(ctx: &Context) -> eyre::Result<()> {
     }
 
     tracing::info!("History point is not set, starting catchup...");
+    tracing::debug!("Trying to get history point from the ICP");
 
-    let _history_point = ctx
+    let history_point = ctx
         .icp()
         .get_history_point()
         .await
         .wrap_err("Failed to get history point from ICP")?;
+
+    tracing::info!("Got history point from ICP: {history_point}");
 
     Ok(())
 }

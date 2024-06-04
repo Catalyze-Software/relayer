@@ -8,21 +8,20 @@ pub struct Context {
     icp: ICPClient,
 }
 
-impl TryFrom<Config> for Context {
-    type Error = eyre::Report;
-
-    fn try_from(cfg: Config) -> eyre::Result<Self> {
+impl Context {
+    pub async fn new(cfg: Config) -> eyre::Result<Self> {
         let redis = redis::Client::open(cfg.redis.url.clone())
             .wrap_err("Failed to establish connection with redis")?;
-        let icp = ICPClient::new(cfg.clone());
+
+        let icp = ICPClient::new(cfg.clone())
+            .await
+            .wrap_err("Failed to create icp client")?;
 
         Ok(Self { cfg, redis, icp })
     }
-}
 
-impl Context {
-    pub fn config(&self) -> &Config {
-        &self.cfg
+    pub fn config(&self) -> Config {
+        self.cfg.clone()
     }
 
     pub fn redis(&self) -> eyre::Result<redis::Connection> {

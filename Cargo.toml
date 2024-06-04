@@ -17,9 +17,8 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 serde = { version = "1", features = ["derive"] }
 serde_with = { version = "3.7" }
 
-ic-cdk = "0.14"
 candid = "0.10"
+ic-agent = "0.35.0"
 
 redis = "0.25"
-
 
