@@ -1,0 +1,22 @@
+[package]
+name = "relayer"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1.38", features = ["full"] }
+
+eyre = "0.6.12"
+color-eyre = "0.6"
+config = { version = "0.14", default-features = false, features = ["toml"] }
+
+serde = { version = "1", features = ["derive"] }
+serde_with = { version = "3.7" }
+
+ic-cdk = "0.14"
+candid = "0.10"
+
+redis = "0.25"
+
