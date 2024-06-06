@@ -22,7 +22,21 @@ pub async fn run(ctx: &Context) -> eyre::Result<()> {
         .await
         .wrap_err("Failed to get history point from ICP")?;
 
-    tracing::info!("Got history point from ICP: {history_point}");
+    tracing::info!("Starting catchup from: {history_point} history point");
+
+    data::set_history_point(ctx, history_point)
+        .wrap_err("Failed to set history point during the catchup")?;
+
+    tracing::debug!("History point is set successfully to redis");
+
+    let _events = produce_events(ctx, history_point)
+        .await
+        .wrap_err("Failed to produce events during the catchup")?;
 
     Ok(())
+}
+
+async fn produce_events(ctx: &Context, history_point: u64) -> eyre::Result<(u64)> {
+    // Produce events
+    Ok((1))
 }
