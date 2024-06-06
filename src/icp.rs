@@ -1,12 +1,17 @@
-use crate::{config::Config, types::HistoryPointResult};
+use crate::{
+    config::Config,
+    types::{HistoryEventResult, HistoryPointResult},
+};
 use candid::{Decode, Encode, Principal};
 use eyre::Context;
 use ic_agent::identity::AnonymousIdentity;
+use proxy_types::models::history_event::HistoryEvent;
 
 pub struct ICPClient {
     agent: ic_agent::Agent,
     proxy_id: Principal,
-    _history_id: Principal,
+    history_id: Principal,
+    limit: u64,
 }
 
 impl ICPClient {
@@ -25,7 +30,8 @@ impl ICPClient {
         Ok(Self {
             agent,
             proxy_id: cfg.proxy_id,
-            _history_id: cfg.history_id,
+            history_id: cfg.history_id,
+            limit: cfg.limit,
         })
     }
 
@@ -41,6 +47,21 @@ impl ICPClient {
         match Decode!(response.as_slice(), HistoryPointResult)? {
             HistoryPointResult::Ok(point) => Ok(point),
             HistoryPointResult::Err(err) => Err(eyre::eyre!("{:#?}", err)),
+        }
+    }
+
+    pub async fn get_events(&self, from: u64) -> eyre::Result<Vec<HistoryEvent>> {
+        let response = self
+            .agent
+            .query(&self.history_id, "get_events")
+            .with_arg(Encode!(&from, &self.limit)?)
+            .call()
+            .await
+            .wrap_err("Failed to perform get events request")?;
+
+        match Decode!(response.as_slice(), HistoryEventResult)? {
+            HistoryEventResult::Ok(events) => Ok(events),
+            HistoryEventResult::Err(err) => Err(eyre::eyre!("{:#?}", err)),
         }
     }
 }

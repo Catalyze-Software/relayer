@@ -1,5 +1,5 @@
-mod event;
+mod history;
 mod proxy;
 
-pub use event::*;
+pub use history::*;
 pub use proxy::*;

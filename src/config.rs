@@ -6,19 +6,36 @@ use serde_with::serde_as;
 #[serde_as]
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
+    #[serde(default = "default_log_filter")]
     pub log_filter: String,
+
+    #[serde(default = "default_interval")]
+    pub interval: u64,
+
+    #[serde(default = "default_limit")]
+    pub limit: u64,
+
+    #[serde(default = "default_ic_url")]
+    pub ic_url: String,
 
     pub proxy_id: Principal,
     pub history_id: Principal,
 
-    pub interval: u64,
-    pub limit: u64,
-
     pub redis: RedisConfig,
-    pub matrix_url: String,
 
-    #[serde(default = "default_ic_url")]
-    pub ic_url: String,
+    pub matrix_url: String,
+}
+
+fn default_log_filter() -> String {
+    "debug,reqwest=info,rustls=info,hyper_util=info,hyper=info".to_string()
+}
+
+fn default_interval() -> u64 {
+    100
+}
+
+fn default_limit() -> u64 {
+    100
 }
 
 fn default_ic_url() -> String {
