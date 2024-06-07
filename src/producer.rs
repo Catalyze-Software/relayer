@@ -10,6 +10,7 @@ pub async fn run(ctx: Arc<Context>) -> eyre::Result<()> {
     tracing::debug!("Trying to get history point from the redis");
 
     let last = data::get_history_point(ctx.clone())
+        .await
         .wrap_err("Failed to get history point during the catchup")?;
 
     tracing::debug!("Trying to get history point from the ICP");
@@ -40,6 +41,7 @@ pub async fn run(ctx: Arc<Context>) -> eyre::Result<()> {
             );
 
             data::set_history_point(ctx.clone(), INITIAL_HISTORY_POINT)
+                .await
                 .wrap_err("Failed to set initial history point during the catchup")?;
 
             tracing::debug!("History point is set successfully to redis");
@@ -79,12 +81,14 @@ async fn produce_events(ctx: Arc<Context>, start_from: u64) -> eyre::Result<()> 
         }
 
         for event in events.clone() {
-            tracing::debug!(history_point, "Producing event to the queue: {:?}", event);
+            data::queue_event(ctx.clone(), event.clone()).await?;
+            tracing::debug!(history_point, "Produced event to the queue: {:?}", event);
         }
 
         history_point += events.len() as u64;
 
         data::set_history_point(ctx, history_point)
+            .await
             .wrap_err("Failed to set history point after the producing events")?;
 
         tracing::debug!(history_point, "History point is set successfully to redis");

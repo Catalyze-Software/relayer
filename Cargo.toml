@@ -20,6 +20,6 @@ serde_with = { version = "3.7" }
 candid = "0.10"
 ic-agent = "0.36"
 
-redis = "0.25"
+redis = { version = "0.25", features = ["tokio-comp"] }
 
 proxy-types =  { package = "canister_types", path = "crates/proxy/src/canister_types" }
