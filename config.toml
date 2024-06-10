@@ -1,6 +1,8 @@
-proxy_id="bwm3m-wyaaa-aaaag-qdiua-cai"
-history_id="2ut72-xaycq-4u3iu-ut232-pqz7y-httja-ufna4-vmvh3-tc2eb-cof6b-yqe"
+log_filter="info,reqwest=info,rustls=info,hyper_util=info,hyper=info"
+proxy_id="24swh-4iaaa-aaaap-ahevq-cai"
+history_id="qejor-xqaaa-aaaap-ahjaa-cai"
 matrix_url="https://matrix.org"
+interval="200"
 
 [redis]
 url = "redis://localhost:6379"

@@ -8,6 +8,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilte
 
 mod config;
 mod consts;
+mod consumer;
 mod context;
 mod data;
 mod icp;
@@ -22,14 +23,33 @@ async fn main() -> eyre::Result<()> {
 
     init_tracing(ctx.config().log_filter.clone());
 
-    tracing::info!("Starting service with config: {:?}", ctx.config());
+    tracing::info!("Starting service with config: {}", ctx.config());
 
-    let producer_span = tracing::debug_span!("producer");
-    let producer_task = spawn(producer::run(ctx).instrument(producer_span));
+    let producer_debug_span = tracing::debug_span!("producer");
+    let producer_info_span = tracing::info_span!("producer");
+
+    let producer_task = spawn(
+        producer::run(ctx.clone())
+            .instrument(producer_debug_span)
+            .instrument(producer_info_span),
+    );
+
+    let consumer_debug_span = tracing::debug_span!("consumer");
+    let consumer_info_span = tracing::info_span!("consumer");
+    let consumer_task = spawn(
+        consumer::run(ctx)
+            .instrument(consumer_debug_span)
+            .instrument(consumer_info_span),
+    );
 
     select! {
         res = producer_task => {
             tracing::warn!("Producer has quit unexpectedly");
+            res??
+        }
+
+        res = consumer_task => {
+            tracing::warn!("Consumer has quit unexpectedly");
             res??
         }
     }

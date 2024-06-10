@@ -5,7 +5,7 @@ use crate::{
 use candid::{Decode, Encode, Principal};
 use eyre::Context;
 use ic_agent::identity::AnonymousIdentity;
-use proxy_types::models::history_event::HistoryEvent;
+use proxy_types::models::history_event::HistoryEventEntry;
 
 pub struct ICPClient {
     agent: ic_agent::Agent,
@@ -50,7 +50,7 @@ impl ICPClient {
         }
     }
 
-    pub async fn get_events(&self, from: u64) -> eyre::Result<Vec<HistoryEvent>> {
+    pub async fn get_events(&self, from: u64) -> eyre::Result<Vec<HistoryEventEntry>> {
         let response = self
             .agent
             .query(&self.history_id, "get_events")

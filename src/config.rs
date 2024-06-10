@@ -26,6 +26,16 @@ pub struct Config {
     pub matrix_url: String,
 }
 
+impl std::fmt::Display for Config {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{{ log_filter: {}, interval: {}, limit: {}, ic_url: {}, proxy_id: {}, history_id: {}, redis: {{ url: {}, queue: {} }}, matrix_url: {} }}",
+            self.log_filter, self.interval, self.limit, self.ic_url, self.proxy_id, self.history_id, self.redis.url, self.redis.queue, self.matrix_url
+        )
+    }
+}
+
 fn default_log_filter() -> String {
     "debug,reqwest=info,rustls=info,hyper_util=info,hyper=info".to_string()
 }
