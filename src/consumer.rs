@@ -1,9 +1,11 @@
-use std::{sync::Arc, time::Duration};
+use std::{str::FromStr, sync::Arc, time::Duration};
 
 use eyre::Context as _;
-use proxy_types::models::history_event::HistoryEventEntry;
+use proxy_types::models::history_event::{
+    GroupRoleChanged, HistoryEvent, HistoryEventEntry, HistoryEventKind,
+};
 
-use crate::{context::Context, data};
+use crate::{context::Context, data, types::MatrixUserID};
 
 pub async fn run(ctx: Arc<Context>) -> eyre::Result<()> {
     tracing::info!("Starting consumer...");
@@ -39,9 +41,37 @@ async fn process_event(
     ctx: Arc<Context>,
     (history_point, event): HistoryEventEntry,
 ) -> eyre::Result<()> {
-    data::pop_from_queue(ctx).await?;
+    let kind = HistoryEventKind::from_str(&event.kind).map_err(|e| {
+        eyre::eyre!("Failed to parse history event kind from string during processing events: {e}")
+    })?;
+
+    match kind {
+        HistoryEventKind::GroupRoleChanged => {
+            process_group_role_changed(ctx.clone(), event.clone()).await?;
+        }
+    }
+
+    data::pop_from_queue(ctx).await.wrap_err_with(|| {
+        format!(
+            "Failed to pop event from the redis queue, history_point: {history_point}, kind: {kind}"
+        )
+    })?;
 
     tracing::info!(history_point, kind = event.kind, "Processed event");
+
+    Ok(())
+}
+
+async fn process_group_role_changed(ctx: Arc<Context>, event: HistoryEvent) -> eyre::Result<()> {
+    let data = GroupRoleChanged::try_from(event)?;
+
+    let _user_id = MatrixUserID::new(
+        data.principal,
+        data.username,
+        ctx.config().matrix_url.clone(),
+    );
+
+    // TODO: Implement the logic to send the group role changed event to the matrix
 
     Ok(())
 }

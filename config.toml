@@ -1,8 +1,8 @@
+# log_filter="debug,reqwest=info,rustls=info,hyper_util=info,hyper=info" // uncomment to enable debug logs
 log_filter="info,reqwest=info,rustls=info,hyper_util=info,hyper=info"
 proxy_id="24swh-4iaaa-aaaap-ahevq-cai"
 history_id="qejor-xqaaa-aaaap-ahjaa-cai"
 matrix_url="https://matrix.org"
-interval="200"
 
 [redis]
 url = "redis://localhost:6379"

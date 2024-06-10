@@ -41,7 +41,7 @@ fn default_log_filter() -> String {
 }
 
 fn default_interval() -> u64 {
-    100
+    300
 }
 
 fn default_limit() -> u64 {
