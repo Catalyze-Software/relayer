@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use eyre::Context as _;
 
 use crate::{config::Config, icp::ICPClient};
@@ -9,7 +11,7 @@ pub struct Context {
 }
 
 impl Context {
-    pub async fn new(cfg: Config) -> eyre::Result<Self> {
+    pub async fn new(cfg: Config) -> eyre::Result<Arc<Self>> {
         let redis_conn = redis::Client::open(cfg.redis_url.clone())
             .wrap_err("Failed to establish connection with redis")?
             .get_multiplexed_tokio_connection()
@@ -20,11 +22,11 @@ impl Context {
             .await
             .wrap_err("Failed to create icp client")?;
 
-        Ok(Self {
+        Ok(Arc::new(Self {
             cfg,
             redis_conn,
             icp,
-        })
+        }))
     }
 
     pub fn config(&self) -> Config {

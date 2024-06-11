@@ -19,9 +19,10 @@ where
     F: Fn(Arc<Context>, HistoryEventEntry) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = eyre::Result<()>> + Send + 'static,
 {
-    let name = format!("consumer_{}", target_kind);
-    let future = run(ctx, target_kind, handler);
-    tokio::spawn(with_spans(&name, future))
+    tokio::spawn(with_spans(
+        &format!("consumer_{}", target_kind),
+        run(ctx, target_kind, handler),
+    ))
 }
 
 async fn run<F, Fut>(
