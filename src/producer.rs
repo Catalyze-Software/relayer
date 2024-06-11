@@ -1,8 +1,8 @@
-use std::{sync::Arc, time::Duration};
+use std::{str::FromStr, sync::Arc, time::Duration};
 
 use eyre::Context as _;
 
-use crate::{context::Context, data};
+use crate::{consumer::QueueKey, context::Context, data};
 
 const INITIAL_HISTORY_POINT: u64 = 1;
 
@@ -90,7 +90,8 @@ async fn produce_events(ctx: Arc<Context>, start_from: u64, actual: u64) -> eyre
         }
 
         for event in events.clone() {
-            data::queue_event(ctx.clone(), event.clone()).await?;
+            let key = QueueKey::from_str(&event.1.kind)?;
+            data::queue_event(ctx.clone(), key, event.clone()).await?;
         }
 
         history_point = events.last().expect("events is not empty").0 + 1;

@@ -2,9 +2,9 @@ use std::sync::Arc;
 
 use config::Config;
 use context::Context;
-use tokio::{select, spawn};
-use tracing::Instrument;
+use proxy_types::models::history_event::HistoryEventKind;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use utils::with_spans;
 
 mod config;
 mod consts;
@@ -14,6 +14,7 @@ mod data;
 mod icp;
 mod producer;
 mod types;
+mod utils;
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
@@ -25,31 +26,21 @@ async fn main() -> eyre::Result<()> {
 
     tracing::info!("Starting service with config: {}", ctx.config());
 
-    let producer_debug_span = tracing::debug_span!("producer");
-    let producer_info_span = tracing::info_span!("producer");
-
-    let producer_task = spawn(
-        producer::run(ctx.clone())
-            .instrument(producer_debug_span)
-            .instrument(producer_info_span),
+    let producer_task = tokio::spawn(with_spans("producer", producer::run(ctx.clone())));
+    let group_role_consumer_task = consumer::spawn(
+        ctx,
+        HistoryEventKind::GroupRoleChanged,
+        consumer::handle_group_role,
     );
 
-    let consumer_debug_span = tracing::debug_span!("consumer");
-    let consumer_info_span = tracing::info_span!("consumer");
-    let consumer_task = spawn(
-        consumer::run(ctx)
-            .instrument(consumer_debug_span)
-            .instrument(consumer_info_span),
-    );
-
-    select! {
+    tokio::select! {
         res = producer_task => {
             tracing::warn!("Producer has quit unexpectedly");
             res??
         }
 
-        res = consumer_task => {
-            tracing::warn!("Consumer has quit unexpectedly");
+        res = group_role_consumer_task => {
+            tracing::warn!("Group role change consumer has quit unexpectedly");
             res??
         }
     }
