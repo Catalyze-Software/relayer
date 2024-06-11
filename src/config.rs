@@ -21,8 +21,7 @@ pub struct Config {
     pub proxy_id: Principal,
     pub history_id: Principal,
 
-    pub redis: RedisConfig,
-
+    pub redis_url: String,
     pub matrix_url: String,
 }
 
@@ -30,8 +29,8 @@ impl std::fmt::Display for Config {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{{ log_filter: {}, interval: {}, limit: {}, ic_url: {}, proxy_id: {}, history_id: {}, redis: {{ url: {}, queue: {} }}, matrix_url: {} }}",
-            self.log_filter, self.interval, self.limit, self.ic_url, self.proxy_id, self.history_id, self.redis.url, self.redis.queue, self.matrix_url
+            "{{ log_filter: {}, interval: {}, limit: {}, ic_url: {}, proxy_id: {}, history_id: {}, redis_url: {}, matrix_url: {} }}",
+            self.log_filter, self.interval, self.limit, self.ic_url, self.proxy_id, self.history_id, self.redis_url, self.matrix_url
         )
     }
 }
@@ -50,13 +49,6 @@ fn default_limit() -> u64 {
 
 fn default_ic_url() -> String {
     "https://ic0.app".to_string()
-}
-
-#[serde_as]
-#[derive(Debug, Clone, Deserialize)]
-pub struct RedisConfig {
-    pub url: String,
-    pub queue: String,
 }
 
 impl Config {

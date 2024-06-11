@@ -10,7 +10,7 @@ pub struct Context {
 
 impl Context {
     pub async fn new(cfg: Config) -> eyre::Result<Self> {
-        let redis_conn = redis::Client::open(cfg.redis.url.clone())
+        let redis_conn = redis::Client::open(cfg.redis_url.clone())
             .wrap_err("Failed to establish connection with redis")?
             .get_multiplexed_tokio_connection()
             .await
