@@ -1,1 +1,11 @@
-/target
+# Various IDEs and Editors
+.vscode/
+.idea/
+**/*~
+
+# Mac OSX temporary files
+.DS_Store
+**/.DS_Store
+
+# Temporary files
+target/
