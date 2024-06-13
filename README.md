@@ -32,6 +32,29 @@ includes the following components:
   consumers for different events, which can be processed in parallel. The current architecture of the
   relayer service allows to easily extend the number of consumers and the processing logic.
 
+## Flows
+
+There is described the main flows of the relayer service, each flow will be described in the separate.
+
+### Group Member Role Change
+
+The flow is responsible for relaying the "Group Member Role Change" events from the history canister
+to the Matrix server. The flow includes the following steps:
+
+1. **Producer** queries the history canister for the events and sends them to the Redis queue.
+2. **Consumer** consumes the events from the Redis queue and processes them.
+3. **Consumer** checks if the event is the "Group Member Role Change" event.
+4. **Consumer** gets the actual `history_point` from the proxy canister.
+5. **Consumer** relays the event to the Matrix server.
+6. **Consumer** updates the removes event from the queue.
+7. **Consumer** repeats the steps 2-6.
+
+The flow is designed to be run in the loop and can be stopped by the shutdown signal.
+
+There is visualized flow as a sequence diagram:
+
+![Sequence Diagram](./assets/gmrc_diagram.png)
+
 ## Changelog
 
 For the changelog, see [CHANGELOG.md](./CHANGELOG.md).

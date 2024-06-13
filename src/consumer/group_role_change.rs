@@ -42,9 +42,22 @@ pub async fn handle_group_role(
 
     room_ids.extend(space_room_ids);
 
-    for room_id in room_ids.into_iter() {
-        set_member_power_level(ctx.clone(), room_id, user_id.clone(), power_level).await?;
+    for room_id in room_ids.clone().into_iter() {
+        set_member_power_level(ctx.clone(), room_id.clone(), user_id.clone(), power_level)
+            .await
+            .wrap_err_with(|| format!("Failed to set member power level, member: \"{user_id}\", room: \"{room_id}\", level: \"{power_level}\""))?;
     }
+
+    tracing::debug!(
+        user_id = user_id.to_string(),
+        room_ids = room_ids
+            .iter()
+            .map(|r| r.to_string())
+            .collect::<Vec<_>>()
+            .join(", "),
+        power_level,
+        "Successfully set member power level",
+    );
 
     Ok(())
 }
