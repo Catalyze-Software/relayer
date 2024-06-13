@@ -2,11 +2,12 @@ use std::sync::Arc;
 
 use eyre::Context as _;
 
-use crate::{config::Config, icp::ICPClient};
+use crate::{config::Config, icp::ICPClient, matrix};
 
 pub struct Context {
     cfg: Config,
     redis_conn: redis::aio::MultiplexedConnection,
+    matrix: matrix_sdk::Client,
     icp: ICPClient,
 }
 
@@ -22,9 +23,12 @@ impl Context {
             .await
             .wrap_err("Failed to create icp client")?;
 
+        let matrix = matrix::client_from_cfg(&cfg).await?;
+
         Ok(Arc::new(Self {
             cfg,
             redis_conn,
+            matrix,
             icp,
         }))
     }
@@ -39,5 +43,9 @@ impl Context {
 
     pub fn icp(&self) -> &ICPClient {
         &self.icp
+    }
+
+    pub fn matrix(&self) -> matrix_sdk::Client {
+        self.matrix.clone()
     }
 }

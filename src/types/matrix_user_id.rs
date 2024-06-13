@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use candid::Principal;
 
+#[derive(Debug, Clone)]
 pub struct MatrixUserID {
     pub principal: Principal,
     pub username: String,

@@ -1,11 +1,8 @@
-use crate::{
-    config::Config,
-    types::{HistoryEventResult, HistoryPointResult},
-};
-use candid::{Decode, Encode, Principal};
+use crate::{config::Config, types::CanisterResult};
+use candid::{Encode, Principal};
 use eyre::Context;
 use ic_agent::identity::AnonymousIdentity;
-use proxy_types::models::history_event::HistoryEventEntry;
+use proxy_types::models::{group::GroupResponse, history_event::HistoryEventEntry};
 
 pub struct ICPClient {
     agent: ic_agent::Agent,
@@ -36,32 +33,43 @@ impl ICPClient {
     }
 
     pub async fn get_history_point(&self) -> eyre::Result<u64> {
-        let response = self
-            .agent
-            .query(&self.proxy_id, "get_history_point")
-            .with_arg(Encode!()?)
-            .call()
-            .await
-            .wrap_err("Failed to perform get history request")?;
-
-        match Decode!(response.as_slice(), HistoryPointResult)? {
-            HistoryPointResult::Ok(point) => Ok(point),
-            HistoryPointResult::Err(err) => Err(eyre::eyre!("{:#?}", err)),
-        }
+        let response = self.query_proxy("get_history_point", Encode!()?).await?;
+        CanisterResult::try_from(response.as_slice())?.into_result()
     }
 
     pub async fn get_events(&self, from: u64) -> eyre::Result<Vec<HistoryEventEntry>> {
+        let args = Encode!(&from, &self.limit)?;
+        let response = self.query_history("get_events", args).await?;
+        CanisterResult::try_from(response.as_slice())?.into_result()
+    }
+
+    pub async fn get_group(&self, group_id: u64) -> eyre::Result<GroupResponse> {
+        let response = self.query_proxy("get_group", Encode!(&group_id)?).await?;
+        CanisterResult::try_from(response.as_slice())?.into_result()
+    }
+
+    async fn query_proxy(&self, method: &str, args: Vec<u8>) -> eyre::Result<Vec<u8>> {
+        self.query(&self.proxy_id, method, args).await
+    }
+
+    async fn query_history(&self, method: &str, args: Vec<u8>) -> eyre::Result<Vec<u8>> {
+        self.query(&self.history_id, method, args).await
+    }
+
+    async fn query(
+        &self,
+        canister_id: &Principal,
+        method: &str,
+        args: Vec<u8>,
+    ) -> eyre::Result<Vec<u8>> {
         let response = self
             .agent
-            .query(&self.history_id, "get_events")
-            .with_arg(Encode!(&from, &self.limit)?)
+            .query(canister_id, method)
+            .with_arg(args)
             .call()
             .await
-            .wrap_err("Failed to perform get events request")?;
+            .wrap_err_with(|| format!("Failed to perform \"{}\" request", method))?;
 
-        match Decode!(response.as_slice(), HistoryEventResult)? {
-            HistoryEventResult::Ok(events) => Ok(events),
-            HistoryEventResult::Err(err) => Err(eyre::eyre!("{:#?}", err)),
-        }
+        Ok(response)
     }
 }

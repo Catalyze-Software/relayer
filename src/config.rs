@@ -1,10 +1,10 @@
 use candid::Principal;
 use eyre::{self, Context};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
 #[serde_as]
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     #[serde(default = "default_log_filter")]
     pub log_filter: String,
@@ -27,11 +27,8 @@ pub struct Config {
 
 impl std::fmt::Display for Config {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{{ log_filter: {}, interval: {}, limit: {}, ic_url: {}, proxy_id: {}, history_id: {}, redis_url: {}, matrix_url: {} }}",
-            self.log_filter, self.interval, self.limit, self.ic_url, self.proxy_id, self.history_id, self.redis_url, self.matrix_url
-        )
+        let json = serde_json::to_string(self).expect("Failed to serialize config to json");
+        write!(f, "{json}")
     }
 }
 

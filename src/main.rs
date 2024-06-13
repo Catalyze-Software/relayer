@@ -1,6 +1,9 @@
 use config::Config;
 use context::Context;
+use eyre::Context as _;
+use matrix_sdk::config::SyncSettings;
 use proxy_types::models::history_event::HistoryEventKind;
+use tokio::task::JoinHandle;
 use utils::with_spans;
 
 mod config;
@@ -9,6 +12,7 @@ mod consumer;
 mod context;
 mod data;
 mod icp;
+mod matrix;
 mod producer;
 mod types;
 mod utils;
@@ -26,10 +30,20 @@ async fn main() -> eyre::Result<()> {
     let producer_task = tokio::spawn(with_spans("producer", producer::run(ctx.clone())));
 
     let group_role_consumer_task = consumer::spawn(
-        ctx,
+        ctx.clone(),
         HistoryEventKind::GroupRoleChanged,
         consumer::handle_group_role,
     );
+
+    let matrix_sync_task: JoinHandle<eyre::Result<()>> =
+        tokio::spawn(with_spans("matrix_sync", async move {
+            let matrix = ctx.matrix().clone();
+            matrix
+                .sync(SyncSettings::default())
+                .await
+                .wrap_err("Failed to sync with matrix server")?;
+            Ok(())
+        }));
 
     tokio::select! {
         res = producer_task => {
@@ -39,6 +53,11 @@ async fn main() -> eyre::Result<()> {
 
         res = group_role_consumer_task => {
             tracing::warn!("Group role change consumer has quit unexpectedly");
+            res??
+        }
+
+        res = matrix_sync_task => {
+            tracing::warn!("Matrix sync task has quit unexpectedly");
             res??
         }
     }
