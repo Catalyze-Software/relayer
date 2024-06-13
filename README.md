@@ -47,6 +47,12 @@ git submodule update --init --recursive
 
 `git submodule update --init --recursive` is necessary to clone the submodules in this repository.
 
+Git Submodules are:
+
+- [`proxy`](https://github.com/Catalyze-Software/proxy) - the proxy canister source code, which is
+  used for encoding\decoding the ICP messages (history canister events). In the future, those types
+  will be moved to the separate crate and will be used by the relayer service and the proxy canister.
+
 ## Configuration
 
 The relayer service is configured using [`config.toml`](./config.toml) file or environment variables.
@@ -82,7 +88,9 @@ Where:
   canister (mostly for getting actual `history_point`).
 - `history_id` or `RELAYER_HISTORY_ID` is the history canister ID, which is used for querying the
   history canister events.
-
+- `matrix_url` or `RELAYER_MATRIX_URL` is the Matrix server URL, which is used for sending the
+  messages to the Matrix server.
+- `redis_url` or `RELAYER_REDIS_URL` is the Redis URL, which is used for queuing the history events.
 
 ## License
 
