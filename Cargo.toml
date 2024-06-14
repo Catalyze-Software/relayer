@@ -11,20 +11,19 @@ reqwest = { version = "0.12", features = ["json"]}
 tokio = { version = "1.38", features = ["full"] }
 
 eyre = "0.6"
-color-eyre = "0.6"
-config = { version = "0.14", default-features = false, features = ["toml"] }
+config = { version = "0.14", features = ["toml"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 serde = { version = "1", features = ["derive"] }
-serde_with = { version = "3.7" }
-serde_json = "1.0"
+serde_with = "3.7"
+serde_json = "1"
 
 candid = "0.10"
 ic-agent = "0.36"
 
 redis = { version = "0.25", features = ["tokio-comp"] }
 
-matrix-sdk = { version = "0.7", features = ["eyre"] }
+matrix-sdk = { version = "0.7", default-features = false, features = ["eyre", "native-tls"] }
 
 proxy-types =  { package = "canister_types", path = "crates/proxy/src/canister_types" }

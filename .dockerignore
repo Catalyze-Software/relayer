@@ -1,0 +1,10 @@
+target
+.github
+assets
+.vscode
+CHANGELOG.md
+LICENSE
+README.md
+docker-compose.yml
+.gitignore
+config.toml

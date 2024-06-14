@@ -19,8 +19,6 @@ mod utils;
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
-    color_eyre::install()?;
-
     let ctx = Context::new(Config::from_env()?).await?;
 
     utils::init_tracing(ctx.config().log_filter.clone());
