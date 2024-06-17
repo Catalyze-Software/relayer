@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-reqwest = { version = "0.12", features = ["json"]}
+reqwest = { version = "0.12", default-features = false, features = ["charset", "json", "rustls-tls"] }
 
 tokio = { version = "1.38", features = ["full"] }
 
@@ -24,6 +24,6 @@ ic-agent = "0.36"
 
 redis = { version = "0.25", features = ["tokio-comp"] }
 
-matrix-sdk = { version = "0.7", default-features = false, features = ["eyre", "native-tls"] }
+matrix-sdk = { version = "0.7", default-features = false, features = ["eyre", "rustls-tls"] }
 
 proxy-types =  { package = "canister_types", path = "crates/proxy/src/canister_types" }

@@ -185,9 +185,7 @@ services:
     image: relayer:latest
     restart: always
     volumes:
-      - ./config.toml:/config.yaml
-    environment:
-      - RELAYER_REDIS_URL=redis://redis:6379
+      - ./config.toml:/config.toml
 
   redis:
     image: redis:7.2
