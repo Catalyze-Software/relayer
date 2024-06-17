@@ -42,12 +42,6 @@ pub async fn handle_group_role(
 
     room_ids.extend(space_room_ids);
 
-    for room_id in room_ids.clone().into_iter() {
-        set_member_power_level(ctx.clone(), room_id.clone(), user_id.clone(), power_level)
-            .await
-            .wrap_err_with(|| format!("Failed to set member power level, member: \"{user_id}\", room: \"{room_id}\", level: \"{power_level}\""))?;
-    }
-
     tracing::debug!(
         user_id = user_id.to_string(),
         room_ids = room_ids
@@ -56,8 +50,44 @@ pub async fn handle_group_role(
             .collect::<Vec<_>>()
             .join(", "),
         power_level,
-        "Successfully set member power level",
+        "Got space room ids, setting member power level"
     );
+
+    let mut applied_to = vec![];
+
+    for room_id in room_ids.clone().into_iter() {
+        let applied = set_member_power_level(ctx.clone(), room_id.clone(), user_id.clone(), power_level)
+            .await
+            .wrap_err_with(|| format!("Failed to set member power level, member: \"{user_id}\", room: \"{room_id}\", level: \"{power_level}\""))?;
+
+        if let Some(room) = applied {
+            applied_to.push(room);
+        }
+    }
+
+    if applied_to.is_empty() {
+        tracing::info!(
+            user_id = user_id.to_string(),
+            room_ids = room_ids
+                .iter()
+                .map(|r| r.to_string())
+                .collect::<Vec<_>>()
+                .join(", "),
+            power_level,
+            "No rooms found to apply power level"
+        );
+    } else {
+        tracing::debug!(
+            user_id = user_id.to_string(),
+            applied_room_ids = applied_to
+                .iter()
+                .map(|r| r.to_string())
+                .collect::<Vec<_>>()
+                .join(", "),
+            power_level,
+            "Successfully set member power level",
+        );
+    }
 
     Ok(())
 }

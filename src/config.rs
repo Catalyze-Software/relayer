@@ -36,7 +36,8 @@ impl std::fmt::Display for Config {
 }
 
 fn default_log_filter() -> String {
-    "debug,reqwest=info,rustls=info,hyper_util=info,hyper=info".to_string()
+    "debug,reqwest=info,rustls=info,hyper_util=info,hyper=info,h2=info,matrix_sdk=info,eyeball=info"
+        .to_owned()
 }
 
 fn default_interval() -> u64 {
@@ -48,7 +49,7 @@ fn default_limit() -> u64 {
 }
 
 fn default_ic_url() -> String {
-    "https://ic0.app".to_string()
+    "https://ic0.app".to_owned()
 }
 
 impl Config {

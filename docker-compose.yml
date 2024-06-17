@@ -1,12 +1,12 @@
 version: "3.8"
 
 services:
-  relayer:
-    # image: ghcr.io/catalyze-software/relayer:58bf0ebd244a26590cf9779fd6c67434eebd312f
-    image: relayer:latest
-    restart: always
-    volumes:
-      - ./config.toml:/config.toml
+  # relayer:
+  #   # image: ghcr.io/catalyze-software/relayer:58bf0ebd244a26590cf9779fd6c67434eebd312f
+  #   image: relayer:latest
+  #   restart: always
+  #   volumes:
+  #     - ./config.toml:/config.toml
 
   redis:
     image: redis:7.2

@@ -45,17 +45,17 @@ async fn main() -> eyre::Result<()> {
 
     tokio::select! {
         res = producer_task => {
-            tracing::warn!("Producer has quit unexpectedly");
+            tracing::error!("Producer has quit unexpectedly");
             res??
         }
 
         res = group_role_consumer_task => {
-            tracing::warn!("Group role change consumer has quit unexpectedly");
+            tracing::error!("Group role change consumer has quit unexpectedly");
             res??
         }
 
         res = matrix_sync_task => {
-            tracing::warn!("Matrix sync task has quit unexpectedly");
+            tracing::error!("Matrix sync task has quit unexpectedly");
             res??
         }
     }

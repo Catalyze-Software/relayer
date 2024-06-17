@@ -95,10 +95,12 @@ pub async fn get_space_rooms(
     ctx: Arc<Context>,
     space_id: OwnedRoomId,
 ) -> eyre::Result<Vec<OwnedRoomId>> {
-    let mut req = get_hierarchy::v1::Request::new(space_id);
+    let mut req = get_hierarchy::v1::Request::new(space_id.clone());
     req.max_depth = UInt::new(1); // Only get the direct children of the space
 
-    let mut resp = send_hierarchy_request(ctx.clone(), req.clone()).await?;
+    let mut resp = send_hierarchy_request(ctx.clone(), req.clone())
+        .await
+        .wrap_err_with(|| format!("Failed to get space hierarchy: {space_id}"))?;
     let mut rooms = room_ids_from_chunks(resp.rooms);
 
     while let Some(next_batch) = resp.next_batch.clone() {
@@ -115,11 +117,19 @@ pub async fn set_member_power_level(
     room_id: OwnedRoomId,
     user_id: MatrixUserID,
     power_level: u64,
-) -> eyre::Result<()> {
-    let room = ctx
-        .matrix()
-        .get_room(&room_id)
-        .ok_or_eyre(format!("Failed to get room with id: {}", room_id))?;
+) -> eyre::Result<Option<OwnedRoomId>> {
+    let room = ctx.matrix().get_room(&room_id);
+
+    if room.is_none() {
+        tracing::info!(
+            room_id = room_id.to_string(),
+            "Room not found, skipping power level update"
+        );
+
+        return Ok(None);
+    }
+
+    let room = room.unwrap();
 
     let can_send = room
         .can_user_send_state(MATRIX_USER_ID.try_into()?, StateEventType::RoomPowerLevels)
@@ -139,7 +149,7 @@ pub async fn set_member_power_level(
     room.update_power_levels(vec![(&user_id, power_level)])
         .await?;
 
-    Ok(())
+    Ok(Some(room_id))
 }
 
 fn room_ids_from_chunks(chunks: Vec<SpaceHierarchyRoomsChunk>) -> Vec<OwnedRoomId> {
