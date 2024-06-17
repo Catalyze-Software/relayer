@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   relayer:
-    image: ghcr.io/catalyze-software/relayer:82bf41b1b7b236bf5a8ad3d52a8107f4f7404c4d
+    image: ghcr.io/catalyze-software/relayer:b16628f2553f551f9ce2acdfb63fff28eaff45f0
     restart: always
     volumes:
       - ./config.toml:/config.yaml

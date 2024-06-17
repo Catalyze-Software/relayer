@@ -11,9 +11,8 @@ ENV RUSTFLAGS="-Ctarget-feature=-crt-static"
 
 RUN cargo build --target x86_64-unknown-linux-musl --release
 
-FROM alpine:3.9
-
-RUN apk add openssl
+FROM debian:bullseye-slim
+RUN apt-get update && apt-get install -y extra-runtime-dependencies && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/src/app/target/x86_64-unknown-linux-musl/release/relayer ./
