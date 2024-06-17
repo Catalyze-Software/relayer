@@ -12,7 +12,8 @@ ENV RUSTFLAGS="-Ctarget-feature=-crt-static"
 RUN cargo build --target x86_64-unknown-linux-musl --release
 
 FROM debian:bullseye-slim
-RUN apt-get update && apt-get install -y extra-runtime-dependencies && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+ENV RUSTFLAGS="-Ctarget-feature=-crt-static"
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/src/app/target/x86_64-unknown-linux-musl/release/relayer ./
