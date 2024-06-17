@@ -23,6 +23,9 @@ pub struct Config {
 
     pub redis_url: String,
     pub matrix_url: String,
+
+    #[serde(default)]
+    pub skip_catchup: bool,
 }
 
 impl std::fmt::Display for Config {

@@ -1,6 +1,14 @@
 version: "3.8"
 
 services:
+  relayer:
+    image: ghcr.io/catalyze-software/relayer:82bf41b1b7b236bf5a8ad3d52a8107f4f7404c4d
+    restart: always
+    volumes:
+      - ./config.toml:/config.yaml
+    environment:
+      - RELAYER_REDIS_URL=redis://redis:6379
+
   redis:
     image: redis:7.2
     ports:

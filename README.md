@@ -88,6 +88,7 @@ proxy_id="24swh-4iaaa-aaaap-ahevq-cai"
 history_id="qejor-xqaaa-aaaap-ahjaa-cai"
 matrix_url="https://matrix.staging.catalyze.chat"
 redis_url="redis://localhost:6379"
+skip_catchup=false
 ```
 
 The environment variables:
@@ -98,6 +99,7 @@ RELAYER_PROXY_ID="24swh-4iaaa-aaaap-ahevq-cai"
 RELAYER_HISTORY_ID="qejor-xqaaa-aaaap-ahjaa-cai"
 RELAYER_MATRIX_URL="https://matrix.staging.catalyze.chat"
 RELAYER_REDIS_URL="redis://localhost:6379"
+RELAYER_SKIP_CATCHUP=false
 ```
 
 Where:
@@ -114,7 +116,111 @@ Where:
 - `matrix_url` or `RELAYER_MATRIX_URL` is the Matrix server URL, which is used for sending the
   messages to the Matrix server.
 - `redis_url` or `RELAYER_REDIS_URL` is the Redis URL, which is used for queuing the history events.
+- `skip_catchup` or `RELAYER_SKIP_CATCHUP` is the flag to skip the catchup process. The catchup
+  process is responsible for catching up the missed events from the history canister. The catchup
+  process is enabled by default, but it can be disabled by setting the `skip_catchup` flag to `true`.
+  Usefull for the testing purposes.
+
+## Building
+
+To build the relayer service, run the following command:
+
+```shell
+cargo build --release
+```
+
+The command will build the relayer service in the release mode and will create the binary in the
+`./target/release/relayer` directory.
+
+### Docker
+
+To build the Docker image, run the following command:
+
+```shell
+docker build . -t relayer:latest
+```
+
+or use existing script:
+
+```shell
+sh scripts/build.sh
+```
+
+## Running
+
+To run the relayer service, run the following command:
+
+```shell
+cargo run --bin relayer
+```
+
+The command will run the relayer service. But you still need to run redis server somewhere, this
+will be enough to run it with the docker-compose:
+
+```yaml
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7.2
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"] # save data to disk
+
+volumes:
+  redis-data:
+```
+
+### Docker-Compose
+
+To run the Docker container, create docker-compose.yml file:
+
+```yaml
+version: "3.8"
+
+services:
+  relayer:
+    image: relayer:latest
+    restart: always
+    volumes:
+      - ./config.toml:/config.yaml
+    environment:
+      - RELAYER_REDIS_URL=redis://redis:6379
+
+  redis:
+    image: redis:7.2
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"] # save data to disk
+
+volumes:
+  redis-data:
+```
+
+You can use own image or use the existing one. check the [relayer's registry] for the latest version.
+
+**To be able to pull the image from the registry, you need to login to the GitHub registry** (because
+the repository is private), check [Authenticating with a personal access token] section in
+the GitHub documentation.
+
+Then run the following command:
+
+```shell
+docker-compose up -d
+```
+
+The command will run the relayer service and the Redis server. To check the logs, run the following
+command:
+
+```shell
+docker-compose logs -f relayer
+```
 
 ## License
 
 [GPL-2.0 License](./LICENSE) © [Catalyze Software](https://catalyze.one/)
+
+[relayer's registry]: https://github.com/Catalyze-Software/relayer/pkgs/container/relayer
+[Authenticating with a personal access token]: https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic

@@ -23,31 +23,14 @@ pub async fn run(ctx: Arc<Context>) -> eyre::Result<()> {
         .await
         .wrap_err("Failed to get history point from ICP")?;
 
-    let last = match last {
-        Some(last) => match last == actual {
-            true => {
-                tracing::info!("History point is actual: {actual}, starting listening events...");
-                actual
-            }
-            false => {
-                tracing::info!(
-                    "Catchup is needed, starting catchup from the history point: {last}"
-                );
-                last
-            }
-        },
-        None => {
-            tracing::info!(
-                "History point is not set, starting catchup from initial history point..."
-            );
-
-            data::set_history_point(ctx.clone(), INITIAL_HISTORY_POINT)
-                .await
-                .wrap_err("Failed to set initial history point during the catchup")?;
-
-            tracing::debug!("History point is set successfully to redis");
-            INITIAL_HISTORY_POINT
-        }
+    let last = if ctx.config().skip_catchup {
+        tracing::info!("Skipping catchup, starting listening events...");
+        data::set_history_point(ctx.clone(), actual)
+            .await
+            .wrap_err("Failed to set actual history point during the skipping catchup")?;
+        actual
+    } else {
+        get_last_history_point(ctx.clone(), actual, last).await?
     };
 
     tracing::debug!(
@@ -59,6 +42,31 @@ pub async fn run(ctx: Arc<Context>) -> eyre::Result<()> {
     produce_events(ctx, last, actual)
         .await
         .wrap_err("Failed to produce events")
+}
+
+async fn get_last_history_point(
+    ctx: Arc<Context>,
+    actual: u64,
+    last: Option<u64>,
+) -> eyre::Result<u64> {
+    if let Some(last) = last {
+        if last == actual {
+            tracing::info!("History point is actual: {actual}, starting listening events...");
+            return Ok(actual);
+        }
+
+        tracing::info!("Catchup is needed, starting catchup from the history point: {last}");
+        return Ok(last);
+    }
+
+    tracing::info!("History point is not set, starting catchup from initial history point...");
+
+    data::set_history_point(ctx.clone(), INITIAL_HISTORY_POINT)
+        .await
+        .wrap_err("Failed to set initial history point during the catchup")?;
+
+    tracing::debug!("History point is set successfully to redis");
+    Ok(INITIAL_HISTORY_POINT)
 }
 
 async fn produce_events(ctx: Arc<Context>, start_from: u64, actual: u64) -> eyre::Result<()> {
