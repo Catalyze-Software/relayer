@@ -19,11 +19,6 @@ impl ICPClient {
             .build()
             .wrap_err("Failed to create IC agent")?;
 
-        agent
-            .fetch_root_key()
-            .await
-            .wrap_err("Failed to fetch root key")?;
-
         Ok(Self {
             agent,
             proxy_id: cfg.proxy_id,
