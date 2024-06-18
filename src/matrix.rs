@@ -1,6 +1,6 @@
 use std::{sync::Arc, time::Duration};
 
-use eyre::{bail, Context as _, OptionExt};
+use eyre::{bail, Context as _};
 use matrix_sdk::{
     ruma::{
         api::client::space::{get_hierarchy, SpaceHierarchyRoomsChunk},
@@ -63,11 +63,19 @@ async fn on_stripped_state_member(
     client: Client,
     room: Room,
 ) {
+    let room_id = room.room_id().to_string();
+
+    tracing::info!(
+        room_id,
+        room_member_state_key = room_member.state_key.to_string(),
+        "Got a stripped state event"
+    );
+
     if room_member.state_key != client.user_id().expect("Should have a user id") {
         return;
     }
 
-    let mut delay = 1;
+    let mut delay = 2;
 
     tokio::spawn(with_spans("matrix_room_auto_joiner", async move {
         while let Err(err) = room.join().await {
@@ -75,19 +83,20 @@ async fn on_stripped_state_member(
             // invited user can join for more information see
             // https://github.com/matrix-org/synapse/issues/4345
             tracing::warn!(
-                "Failed to join room {} ({err:?}), retrying in {delay}s",
-                room.room_id()
+                err = err.to_string(),
+                room_id,
+                "Failed to join room, retrying in {delay}s",
             );
 
             tokio::time::sleep(Duration::from_secs(delay)).await;
             delay *= 2;
 
             if delay > 3600 {
-                tracing::error!("Can't join room {} ({err:?})", room.room_id());
+                tracing::error!(err = err.to_string(), room_id, "Can't join room",);
                 break;
             }
         }
-        tracing::debug!("Successfully joined room {}", room.room_id());
+        tracing::info!(room_id, "Successfully joined room");
     }));
 }
 
@@ -101,6 +110,7 @@ pub async fn get_space_rooms(
     let mut resp = send_hierarchy_request(ctx.clone(), req.clone())
         .await
         .wrap_err_with(|| format!("Failed to get space hierarchy: {space_id}"))?;
+
     let mut rooms = room_ids_from_chunks(resp.rooms);
 
     while let Some(next_batch) = resp.next_batch.clone() {
