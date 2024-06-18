@@ -49,7 +49,7 @@ fn default_limit() -> u64 {
 }
 
 fn default_ic_url() -> String {
-    "https://ic0.app".to_owned()
+    "https://icp0.io".to_owned()
 }
 
 impl Config {
