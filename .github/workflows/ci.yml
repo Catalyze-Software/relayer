@@ -1,0 +1,53 @@
+name: Build
+
+on: [push]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RUSTFLAGS: "-D warnings"
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Log in to registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Setup Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: rustfmt
+        run: cargo fmt -- --check
+
+      - name: clippy
+        run: cargo clippy
+
+      - name: Cache layers
+        uses: actions/cache@v3
+        with:
+          path: "${{ github.workspace }}/.skaffold/cache"
+          key: skaffold-${{ hashFiles('**/cache') }}
+          restore-keys: |
+            skaffold-
+
+      - name: Run Skaffold pipeline as command
+        uses: hiberbee/github-action-skaffold@latest
+        id: build
+        with:
+          command: build --tag ${{ github.sha }}
+          repository: ghcr.io/${{ github.repository_owner }}

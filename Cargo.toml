@@ -1,0 +1,29 @@
+[package]
+name = "relayer"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+reqwest = { version = "0.12", default-features = false, features = ["charset", "json", "rustls-tls"] }
+
+tokio = { version = "1.38", features = ["full"] }
+
+eyre = "0.6"
+config = { version = "0.14", features = ["toml"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+serde = { version = "1", features = ["derive"] }
+serde_with = "3.7"
+serde_json = "1"
+
+candid = "0.10"
+ic-agent = "0.36"
+
+redis = { version = "0.25", features = ["tokio-comp"] }
+
+matrix-sdk = { version = "0.7", default-features = false, features = ["eyre", "rustls-tls"] }
+
+proxy-types =  { package = "canister_types", path = "crates/proxy/src/canister_types" }
