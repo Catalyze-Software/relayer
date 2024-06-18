@@ -21,14 +21,15 @@ impl MatrixUserID {
 
 impl Display for MatrixUserID {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let id = [
-            self.principal.to_string(),
-            self.username.clone(),
-            self.matrix_base_url.clone(),
-        ]
-        .join(":");
+        let principal = self.principal.to_string();
+        let username = self.username.to_lowercase();
+        let matrix_url = self
+            .matrix_base_url
+            .trim_start_matches("https://matrix.")
+            .trim_start_matches("https://") // You ask me why? - I don't know
+            .trim_end_matches('/');
 
         // Equal to how the front-end deterministically generates the user ID for the matrix
-        write!(f, "@{id}")
+        write!(f, "@{principal}/{username}:{matrix_url}")
     }
 }

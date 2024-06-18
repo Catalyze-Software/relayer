@@ -12,7 +12,7 @@ use crate::{
 
 pub async fn handle_group_role(
     ctx: Arc<Context>,
-    (_, event): HistoryEventEntry,
+    (history_point, event): HistoryEventEntry,
 ) -> eyre::Result<()> {
     let payload = GroupRoleChanged::try_from(event)?;
 
@@ -36,11 +36,22 @@ pub async fn handle_group_role(
 
     let mut room_ids = vec![space_id.clone()];
 
-    let space_room_ids = get_space_rooms(ctx.clone(), space_id)
+    let space_room_ids = get_space_rooms(ctx.clone(), space_id.clone())
         .await
         .wrap_err("Failed to get space room ids")?;
 
+    if space_room_ids.is_empty() {
+        tracing::warn!(
+            history_point,
+            space_id = space_id.to_string(),
+            "Skipping event, no space room ids found"
+        );
+        return Ok(());
+    }
+
     room_ids.extend(space_room_ids);
+    room_ids.sort();
+    room_ids.dedup();
 
     tracing::debug!(
         user_id = user_id.to_string(),
@@ -77,7 +88,7 @@ pub async fn handle_group_role(
             "No rooms found to apply power level"
         );
     } else {
-        tracing::debug!(
+        tracing::info!(
             user_id = user_id.to_string(),
             applied_room_ids = applied_to
                 .iter()

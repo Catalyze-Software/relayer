@@ -22,7 +22,6 @@ async fn main() -> eyre::Result<()> {
     let ctx = Context::new(Config::from_env()?).await?;
 
     utils::init_tracing(ctx.config().log_filter.clone());
-
     tracing::info!("Starting service with config: {}", ctx.config());
 
     let producer_task = tokio::spawn(with_spans("producer", producer::run(ctx.clone())));
@@ -35,12 +34,10 @@ async fn main() -> eyre::Result<()> {
 
     let matrix_sync_task: JoinHandle<eyre::Result<()>> =
         tokio::spawn(with_spans("matrix_sync", async move {
-            let matrix = ctx.matrix().clone();
-            matrix
+            ctx.matrix()
                 .sync(SyncSettings::default())
                 .await
-                .wrap_err("Failed to sync with matrix server")?;
-            Ok(())
+                .wrap_err("Failed to sync with matrix server")
         }));
 
     tokio::select! {

@@ -1,13 +1,13 @@
 use std::{sync::Arc, time::Duration};
 
-use eyre::{bail, Context as _};
+use eyre::{bail, Context as _, OptionExt};
 use matrix_sdk::{
     ruma::{
         api::client::space::{get_hierarchy, SpaceHierarchyRoomsChunk},
         events::{room::member::StrippedRoomMemberEvent, StateEventType},
         Int, OwnedRoomId, UInt, UserId,
     },
-    Client, Room,
+    Client, HttpError, Room,
 };
 
 use crate::{
@@ -67,6 +67,7 @@ async fn on_stripped_state_member(
 
     tracing::info!(
         room_id,
+        relayer_id = client.user_id().expect("Should have a user id").to_string(),
         room_member_state_key = room_member.state_key.to_string(),
         "Got a stripped state event"
     );
@@ -107,9 +108,17 @@ pub async fn get_space_rooms(
     let mut req = get_hierarchy::v1::Request::new(space_id.clone());
     req.max_depth = UInt::new(1); // Only get the direct children of the space
 
-    let mut resp = send_hierarchy_request(ctx.clone(), req.clone())
-        .await
-        .wrap_err_with(|| format!("Failed to get space hierarchy: {space_id}"))?;
+    let mut resp = match send_hierarchy_request(ctx.clone(), req.clone()).await {
+        Ok(resp) => resp,
+        Err(err) => {
+            tracing::warn!(
+                err = err.to_string(),
+                space_id = space_id.to_string(),
+                "Failed to get space hierarchy"
+            );
+            return Ok(vec![]);
+        }
+    };
 
     let mut rooms = room_ids_from_chunks(resp.rooms);
 
@@ -128,7 +137,8 @@ pub async fn set_member_power_level(
     user_id: MatrixUserID,
     power_level: u64,
 ) -> eyre::Result<Option<OwnedRoomId>> {
-    let room = ctx.matrix().get_room(&room_id);
+    let matrix = ctx.matrix();
+    let room = matrix.get_room(&room_id);
 
     if room.is_none() {
         tracing::info!(
@@ -141,8 +151,12 @@ pub async fn set_member_power_level(
 
     let room = room.unwrap();
 
+    let relayer_id = matrix
+        .user_id()
+        .ok_or_eyre("Failed to get relayer id during checking room permissions")?;
+
     let can_send = room
-        .can_user_send_state(MATRIX_USER_ID.try_into()?, StateEventType::RoomPowerLevels)
+        .can_user_send_state(relayer_id, StateEventType::RoomPowerLevels)
         .await
         .wrap_err("Failed to get can relayer send state events")?;
 
@@ -169,9 +183,6 @@ fn room_ids_from_chunks(chunks: Vec<SpaceHierarchyRoomsChunk>) -> Vec<OwnedRoomI
 async fn send_hierarchy_request(
     ctx: Arc<Context>,
     req: get_hierarchy::v1::Request,
-) -> eyre::Result<get_hierarchy::v1::Response> {
-    ctx.matrix()
-        .send(req, None)
-        .await
-        .wrap_err("Failed to get batch of the space rooms")
+) -> Result<get_hierarchy::v1::Response, HttpError> {
+    ctx.matrix().send(req, None).await
 }
