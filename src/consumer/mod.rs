@@ -49,7 +49,7 @@ where
         tracing::debug!("Got {} event(s)", events.len());
 
         if events.is_empty() {
-            tracing::info!("No events in the queue, waiting for the next iteration...");
+            tracing::debug!("No events in the queue, waiting for the next iteration...");
             tokio::time::sleep(interval).await;
             continue;
         }

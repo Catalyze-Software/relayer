@@ -92,7 +92,7 @@ async fn produce_events(ctx: Arc<Context>, start_from: u64, actual: u64) -> eyre
         tracing::debug!(mode, history_point, "Got {} events", events.len());
 
         if events.is_empty() {
-            tracing::info!(history_point, "No more events to produce, sleeping...");
+            tracing::debug!(history_point, "No more events to produce, sleeping...");
             tokio::time::sleep(interval).await;
             continue;
         }
