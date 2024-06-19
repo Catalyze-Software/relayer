@@ -18,6 +18,8 @@ use crate::{
     utils::with_spans,
 };
 
+static MAX_JOIN_RETRY_DELAY: u64 = 3600;
+
 pub async fn generate_token() -> eyre::Result<String> {
     let response: MatrixAuthTokenResponse = reqwest::Client::new()
         .get(format!(
@@ -92,7 +94,7 @@ async fn on_stripped_state_member(
             tokio::time::sleep(Duration::from_secs(delay)).await;
             delay *= 2;
 
-            if delay > 3600 {
+            if delay > MAX_JOIN_RETRY_DELAY {
                 tracing::error!(err = err.to_string(), room_id, "Can't join room",);
                 break;
             }
@@ -108,16 +110,18 @@ pub async fn get_space_rooms(
     let mut req = get_hierarchy::v1::Request::new(space_id.clone());
     req.max_depth = UInt::new(1); // Only get the direct children of the space
 
-    let mut resp = match send_hierarchy_request(ctx.clone(), req.clone()).await {
-        Ok(resp) => resp,
-        Err(err) => {
+    let resp = send_hierarchy_request(ctx.clone(), req.clone())
+        .await
+        .map_err(|e| {
             tracing::warn!(
-                err = err.to_string(),
+                err = e.to_string(),
                 space_id = space_id.to_string(),
                 "Failed to get space hierarchy"
             );
-            return Ok(vec![]);
-        }
+        });
+
+    let Ok(mut resp) = resp else {
+        return Ok(vec![]);
     };
 
     let mut rooms = room_ids_from_chunks(resp.rooms);
