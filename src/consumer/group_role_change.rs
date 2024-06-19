@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 
 use eyre::Context as _;
 use matrix_sdk::ruma::RoomId;
@@ -7,7 +7,7 @@ use proxy_types::models::history_event::{GroupRoleChanged, HistoryEventEntry};
 use crate::{
     context::Context,
     matrix::{get_space_rooms, set_member_power_level},
-    types::MatrixUserID,
+    types::{MatrixUserID, Role},
 };
 
 pub async fn handle_group_role(
@@ -31,9 +31,31 @@ pub async fn handle_group_role(
     let space_id = RoomId::parse(group.matrix_space_id.clone())
         .wrap_err_with(|| format!("Failed to parse space room id: {}", group.matrix_space_id))?;
 
-    // FIXME: should be a map of group roles to power levels eg. POWER_LEVELS[payload.roles[0]]
-    let power_level = 50;
+    if payload.roles.len() != 1 {
+        tracing::warn!(
+            history_point,
+            user_id = user_id.to_string(),
+            roles = payload.roles.join(", "),
+            roles_len = payload.roles.len(),
+            "Skipping event, expected exactly one role"
+        );
+        return Ok(());
+    }
 
+    let role = Role::from_str(&payload.roles[0]).map_err(|e| {
+        tracing::warn!(
+            history_point,
+            user_id = user_id.to_string(),
+            role = payload.roles[0],
+            error = e.to_string(),
+            "Skipping event, failed to parse role"
+        );
+    });
+    let Ok(role) = role else {
+        return Ok(());
+    };
+
+    let power_level = role.power_level();
     let mut room_ids = vec![space_id.clone()];
 
     let space_room_ids = get_space_rooms(ctx.clone(), space_id.clone())
@@ -76,29 +98,30 @@ pub async fn handle_group_role(
         }
     }
 
-    if applied_to.is_empty() {
-        tracing::info!(
-            user_id = user_id.to_string(),
-            room_ids = room_ids
-                .iter()
-                .map(|r| r.to_string())
-                .collect::<Vec<_>>()
-                .join(", "),
-            power_level,
-            "No rooms found to apply power level"
-        );
+    let ids = if applied_to.clone().is_empty() {
+        room_ids
     } else {
-        tracing::info!(
-            user_id = user_id.to_string(),
-            applied_room_ids = applied_to
-                .iter()
-                .map(|r| r.to_string())
-                .collect::<Vec<_>>()
-                .join(", "),
-            power_level,
-            "Successfully set member power level",
-        );
-    }
+        applied_to.clone()
+    };
+
+    let ids = ids
+        .iter()
+        .map(|r| r.to_string())
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    let msg = if applied_to.is_empty() {
+        "No rooms found to apply power level"
+    } else {
+        "Successfully set member power level"
+    };
+
+    tracing::info!(
+        user_id = user_id.to_string(),
+        room_ids = ids,
+        power_level,
+        msg,
+    );
 
     Ok(())
 }
