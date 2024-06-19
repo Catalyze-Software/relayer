@@ -4,10 +4,10 @@ use eyre::bail;
 
 #[derive(Debug, Clone)]
 pub enum Role {
-    Owner,
-    Admin,
-    Moderator,
-    Member,
+    Owner = 100,
+    Admin = 95,
+    Moderator = 50,
+    Member = 10,
 }
 
 impl FromStr for Role {
@@ -28,11 +28,6 @@ impl FromStr for Role {
 
 impl Role {
     pub fn power_level(&self) -> u64 {
-        match self {
-            Self::Owner => 100,
-            Self::Admin => 95,
-            Self::Moderator => 50,
-            Self::Member => 10,
-        }
+        self.clone() as u64
     }
 }
