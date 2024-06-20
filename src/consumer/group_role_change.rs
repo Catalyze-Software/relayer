@@ -22,11 +22,19 @@ pub async fn handle_group_role(
         ctx.config().matrix_url.clone(),
     );
 
-    let group = ctx
-        .icp()
-        .get_group(payload.group_id)
-        .await
-        .wrap_err_with(|| format!("Failed to get group with id: {}", payload.group_id))?;
+    let group = ctx.icp().get_group(payload.group_id).await.map_err(|e| {
+        tracing::warn!(
+            history_point,
+            user_id = user_id.to_string(),
+            role = payload.roles[0],
+            error = e.to_string(),
+            group_id = payload.group_id,
+            "Skipping event, failed to get group by id"
+        );
+    });
+    let Ok(group) = group else {
+        return Ok(());
+    };
 
     let space_id = RoomId::parse(group.matrix_space_id.clone())
         .wrap_err_with(|| format!("Failed to parse space room id: {}", group.matrix_space_id))?;

@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2024-06-20
+### Fixed
+- Skip event if group not found in the proxy.
+
 ## [0.1.1] - 2024-06-19
 ### Changed
 - Moved some infinite logs to debug logs.
@@ -15,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial implementation of the relayer service.
 
 
-[Unreleased]: https://github.com/Catalyze-Software/relayer/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/Catalyze-Software/relayer/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/Catalyze-Software/relayer/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/Catalyze-Software/relayer/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Catalyze-Software/relayer/releases/tag/v0.1.0
