@@ -26,6 +26,8 @@ pub struct Config {
 
     #[serde(default)]
     pub skip_catchup: bool,
+
+    pub password: String,
 }
 
 impl std::fmt::Display for Config {
