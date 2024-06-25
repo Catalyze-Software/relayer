@@ -166,3 +166,14 @@ async fn send_hierarchy_request(
 ) -> Result<get_hierarchy::v1::Response, HttpError> {
     ctx.matrix().send(req, None).await
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_login() {
+        let ctx = Context::new(Config::from_env().unwrap()).await.unwrap();
+        client_from_cfg(&ctx.config()).await.unwrap();
+    }
+}
