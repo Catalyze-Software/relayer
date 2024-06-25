@@ -11,29 +11,11 @@ use matrix_sdk::{
 };
 
 use crate::{
-    config::Config,
-    consts::MATRIX_USER_ID,
-    context::Context,
-    types::{MatrixAuthTokenResponse, MatrixUserID},
+    config::Config, consts::MATRIX_USER_ID, context::Context, types::MatrixUserID,
     utils::with_spans,
 };
 
 static MAX_JOIN_RETRY_DELAY: u64 = 3600;
-
-pub async fn generate_token() -> eyre::Result<String> {
-    let response: MatrixAuthTokenResponse = reqwest::Client::new()
-        .get(format!(
-            "https://api.catalyze.chat/api/1/token/matrix?id={MATRIX_USER_ID}"
-        ))
-        .send()
-        .await
-        .wrap_err("Failed to send generate token request")?
-        .json()
-        .await
-        .wrap_err("Failed to deserialize matrix auth token response")?;
-
-    Ok(response.token)
-}
 
 pub async fn client_from_cfg(cfg: &Config) -> eyre::Result<Client> {
     let client = Client::builder()
@@ -42,15 +24,9 @@ pub async fn client_from_cfg(cfg: &Config) -> eyre::Result<Client> {
         .await
         .wrap_err("Failed to create matrix client")?;
 
-    let token = generate_token().await?;
-
     client
         .matrix_auth()
-        .login_custom(
-            "org.matrix.login.jwt",
-            [("token".to_owned(), token.into())].into_iter().collect(),
-        )
-        .wrap_err("Failed to build custom login")?
+        .login_username(MATRIX_USER_ID, &cfg.password)
         .initial_device_display_name(MATRIX_USER_ID)
         .await
         .wrap_err("Failed to authorize with the matrix client")?;

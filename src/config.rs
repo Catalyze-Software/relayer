@@ -26,6 +26,8 @@ pub struct Config {
 
     #[serde(default)]
     pub skip_catchup: bool,
+
+    pub password: String,
 }
 
 impl std::fmt::Display for Config {
@@ -55,7 +57,12 @@ fn default_ic_url() -> String {
 impl Config {
     pub(crate) fn from_env() -> eyre::Result<Self> {
         config::Config::builder()
-            .add_source(config::File::new("./config.toml", config::FileFormat::Toml))
+            .add_source(
+                config::File::new("./config.toml", config::FileFormat::Toml).required(false),
+            )
+            .add_source(
+                config::File::new("./config.local.toml", config::FileFormat::Toml).required(false),
+            )
             .add_source(
                 config::Environment::with_prefix("RELAYER")
                     .separator("_")
@@ -65,5 +72,16 @@ impl Config {
             .wrap_err("Failed to build config from source")?
             .try_deserialize()
             .wrap_err("Failed to deserialize config")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_config() {
+        let config = Config::from_env().unwrap();
+        println!("{}", config);
     }
 }

@@ -9,3 +9,6 @@
 
 # Temporary files
 target/
+
+# config
+config.local.toml
