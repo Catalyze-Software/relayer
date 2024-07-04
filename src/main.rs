@@ -52,8 +52,10 @@ async fn main() -> eyre::Result<()> {
 
     // forcibly end all tasks if they have not been completed
     tokio::spawn(async move {
-        tokio::time::sleep(std::time::Duration::from_millis(60)).await;
-        set.shutdown().await;
+        tokio::select! {
+            _ = tokio::time::sleep(std::time::Duration::from_millis(60)) => {},
+            _ = set.shutdown() => {}
+        };
     });
 
     Ok(())
@@ -63,12 +65,11 @@ fn handle_task_result(
     ctx: Arc<Context>,
     res: Option<Result<eyre::Result<()>, JoinError>>,
 ) -> eyre::Result<()> {
-    if let Some(res) = res {
-        if let Err(err) = res? {
-            // send shutdown signal to all tasks
-            ctx.cancel();
-            tracing::error!("Cancelling all tasks, task failed: {err}");
-        }
+    // JoinSet returns None only if it's empty
+    if let Err(err) = res.unwrap()? {
+        // send shutdown signal to all tasks
+        ctx.cancel();
+        tracing::error!("Cancelling all tasks, task failed: {err}");
     }
 
     Ok(())

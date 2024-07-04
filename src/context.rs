@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use eyre::Context as _;
-use tokio_util::sync::CancellationToken;
+use tokio_util::sync::{CancellationToken, WaitForCancellationFuture};
 
 use crate::{config::Config, icp::ICPClient, matrix};
 
@@ -60,7 +60,7 @@ impl Context {
         self.cancel_token.cancel();
     }
 
-    pub fn is_cancelled(&self) -> bool {
-        self.cancel_token.is_cancelled()
+    pub fn cancelled(&self) -> WaitForCancellationFuture<'_> {
+        self.cancel_token.cancelled()
     }
 }

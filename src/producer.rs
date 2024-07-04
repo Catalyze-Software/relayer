@@ -1,6 +1,7 @@
 use std::{str::FromStr, sync::Arc, time::Duration};
 
 use eyre::Context as _;
+use tokio::select;
 
 use crate::{consumer::QueueKey, context::Context, data};
 
@@ -81,17 +82,17 @@ async fn produce_events(ctx: Arc<Context>, start_from: u64, actual: u64) -> eyre
     loop {
         let ctx = ctx.clone();
 
-        if ctx.is_cancelled() {
-            tracing::info!(mode, history_point, "Received cancel signal, stopping...");
-            return Ok(());
-        }
-
         tracing::debug!(mode, history_point, "Getting events...",);
 
-        let events = ctx
-            .icp()
-            .get_events(history_point)
-            .await
+        let events = select! {
+            res = ctx.icp().get_events(history_point) => res,
+            _ = ctx.cancelled() => {
+                tracing::info!(mode, history_point, "Received cancel signal, stopping...");
+                return Ok(());
+            }
+        };
+
+        let events = events
             .wrap_err_with(|| format!("Failed to get event on history_point: {history_point}"))?;
 
         tracing::debug!(mode, history_point, "Got {} events", events.len());

@@ -2,6 +2,7 @@ use std::{future::Future, str::FromStr, sync::Arc, time::Duration};
 
 use eyre::Context as _;
 use proxy_types::models::history_event::{HistoryEventEntry, HistoryEventKind};
+use tokio::select;
 
 use crate::{context::Context, data, utils::with_spans};
 
@@ -42,14 +43,15 @@ where
         let ctx = ctx.clone();
         tracing::debug!("Trying to get history events from the redis");
 
-        if ctx.is_cancelled() {
-            tracing::info!("Received cancel signal, stopping...");
-            return Ok(());
-        }
+        let events = select! {
+            res = data::get_events(ctx.clone(), key.clone()) => res,
+            _ = ctx.cancelled() => {
+                tracing::info!("Received cancel signal, stopping...");
+                return Ok(());
+            }
+        };
 
-        let events = data::get_events(ctx.clone(), key.clone())
-            .await
-            .wrap_err("Failed to get history events from the redis")?;
+        let events = events.wrap_err("Failed to get history events from the redis")?;
 
         tracing::debug!("Got {} event(s)", events.len());
 
