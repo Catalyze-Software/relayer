@@ -6,7 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tokio = { version = "1.38", features = ["full"] }
+clap = { version = "4",  features = ["derive"] }
+
+tokio = { version = "1.38", features = ["full", "rt"] }
+tokio-util = { version = "0.7", default-features = false }
 
 eyre = "0.6"
 config = { version = "0.14", features = ["toml"] }

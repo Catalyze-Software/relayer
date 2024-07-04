@@ -1,11 +1,15 @@
+use std::sync::Arc;
+
+use clap::Parser;
+use cmd::Opts;
 use config::Config;
 use context::Context;
-use eyre::Context as _;
-use matrix_sdk::config::SyncSettings;
-use proxy_types::models::history_event::HistoryEventKind;
-use tokio::task::JoinHandle;
-use utils::with_spans;
+use tokio::{
+    signal::unix::{signal, SignalKind},
+    task::JoinError,
+};
 
+mod cmd;
 mod config;
 mod consts;
 mod consumer;
@@ -19,41 +23,51 @@ mod utils;
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
+    let opts = Opts::parse();
     let ctx = Context::new(Config::from_env()?).await?;
 
     utils::init_tracing(ctx.config().log_filter.clone());
     tracing::info!("Starting service with config: {}", ctx.config());
 
-    let producer_task = tokio::spawn(with_spans("producer", producer::run(ctx.clone())));
+    let mut set = opts.cmd.run(ctx.clone());
 
-    let group_role_consumer_task = consumer::spawn(
-        ctx.clone(),
-        HistoryEventKind::GroupRoleChanged,
-        consumer::handle_group_role,
-    );
-
-    let matrix_sync_task: JoinHandle<eyre::Result<()>> =
-        tokio::spawn(with_spans("matrix_sync", async move {
-            ctx.matrix()
-                .sync(SyncSettings::default())
-                .await
-                .wrap_err("Failed to sync with matrix server")
-        }));
+    let mut sigint = signal(SignalKind::interrupt())?;
+    let mut sigterm = signal(SignalKind::terminate())?;
 
     tokio::select! {
-        res = producer_task => {
-            tracing::error!("Producer has quit unexpectedly");
-            res??
+        _ = sigint.recv() => {
+            tracing::info!("Received SIGINT, shutting down...");
+            ctx.cancel();
         }
 
-        res = group_role_consumer_task => {
-            tracing::error!("Group role change consumer has quit unexpectedly");
-            res??
+        _ = sigterm.recv() => {
+            tracing::info!("Received SIGTERM, shutting down...");
+            ctx.cancel();
         }
 
-        res = matrix_sync_task => {
-            tracing::error!("Matrix sync task has quit unexpectedly");
-            res??
+        res = set.join_next() => {
+          handle_task_result(ctx.clone(), res)?
+        }
+    }
+
+    // forcibly end all tasks if they have not been completed
+    tokio::spawn(async move {
+        tokio::time::sleep(std::time::Duration::from_millis(60)).await;
+        set.shutdown().await;
+    });
+
+    Ok(())
+}
+
+fn handle_task_result(
+    ctx: Arc<Context>,
+    res: Option<Result<eyre::Result<()>, JoinError>>,
+) -> eyre::Result<()> {
+    if let Some(res) = res {
+        if let Err(err) = res? {
+            // send shutdown signal to all tasks
+            ctx.cancel();
+            tracing::error!("Cancelling all tasks, task failed: {err}");
         }
     }
 

@@ -81,6 +81,11 @@ async fn produce_events(ctx: Arc<Context>, start_from: u64, actual: u64) -> eyre
     loop {
         let ctx = ctx.clone();
 
+        if ctx.is_cancelled() {
+            tracing::info!(mode, history_point, "Received cancel signal, stopping...");
+            return Ok(());
+        }
+
         tracing::debug!(mode, history_point, "Getting events...",);
 
         let events = ctx

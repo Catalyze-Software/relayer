@@ -12,17 +12,17 @@ pub use key::QueueKey;
 
 pub fn spawn<F, Fut>(
     ctx: Arc<Context>,
+    set: &mut tokio::task::JoinSet<eyre::Result<()>>,
     target_kind: HistoryEventKind,
     handler: F,
-) -> tokio::task::JoinHandle<eyre::Result<()>>
-where
+) where
     F: Fn(Arc<Context>, HistoryEventEntry) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = eyre::Result<()>> + Send + 'static,
 {
-    tokio::spawn(with_spans(
+    set.spawn(with_spans(
         &format!("consumer_{}", target_kind),
         run(ctx, target_kind, handler),
-    ))
+    ));
 }
 
 async fn run<F, Fut>(
@@ -41,6 +41,11 @@ where
     loop {
         let ctx = ctx.clone();
         tracing::debug!("Trying to get history events from the redis");
+
+        if ctx.is_cancelled() {
+            tracing::info!("Received cancel signal, stopping...");
+            return Ok(());
+        }
 
         let events = data::get_events(ctx.clone(), key.clone())
             .await
