@@ -9,13 +9,37 @@ use matrix_sdk::{
     },
     Client, HttpError, Room,
 };
+use serde::Deserialize;
 
 use crate::{
-    config::Config, consts::MATRIX_USER_ID, context::Context, types::MatrixUserID,
+    config::{Config, MatrixLoginMethod},
+    consts::MATRIX_USER_ID,
+    context::Context,
+    types::MatrixUserID,
     utils::with_spans,
 };
 
 static MAX_JOIN_RETRY_DELAY: u64 = 3600;
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct MatrixAuthTokenResponse {
+    pub token: String,
+}
+
+pub async fn generate_token() -> eyre::Result<String> {
+    let response: MatrixAuthTokenResponse = reqwest::Client::new()
+        .get(format!(
+            "https://api.catalyze.chat/api/1/token/matrix?id={MATRIX_USER_ID}"
+        ))
+        .send()
+        .await
+        .wrap_err("Failed to send generate token request")?
+        .json()
+        .await
+        .wrap_err("Failed to deserialize matrix auth token response")?;
+
+    Ok(response.token)
+}
 
 pub async fn client_from_cfg(cfg: &Config) -> eyre::Result<Client> {
     let client = Client::builder()
@@ -24,9 +48,29 @@ pub async fn client_from_cfg(cfg: &Config) -> eyre::Result<Client> {
         .await
         .wrap_err("Failed to create matrix client")?;
 
-    client
-        .matrix_auth()
-        .login_username(MATRIX_USER_ID, &cfg.password)
+    let login_builder = client.matrix_auth();
+
+    let login_builder = match cfg.matrix_login_method {
+        MatrixLoginMethod::Jwt => {
+            let token = generate_token().await?;
+
+            login_builder
+                .login_custom(
+                    "org.matrix.login.jwt",
+                    [("token".to_owned(), token.into())].into_iter().collect(),
+                )
+                .wrap_err("Failed to build custom login")?
+        }
+        MatrixLoginMethod::Password => {
+            if cfg.password.is_empty() {
+                bail!("Matrix password is empty")
+            }
+
+            login_builder.login_username(MATRIX_USER_ID, &cfg.password)
+        }
+    };
+
+    login_builder
         .initial_device_display_name(MATRIX_USER_ID)
         .await
         .wrap_err("Failed to authorize with the matrix client")?;
