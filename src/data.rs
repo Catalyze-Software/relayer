@@ -5,7 +5,7 @@ use eyre::Context as _;
 use proxy_types::models::history_event::HistoryEventEntry;
 use redis::AsyncCommands;
 
-use crate::{consts::HISTORY_POINT_KEY, consumer::QueueKey, context::Context};
+use crate::{consts::HISTORY_POINT_KEY, context::Context, services::consumer::QueueKey};
 
 pub async fn get_history_point(ctx: Arc<Context>) -> eyre::Result<Option<u64>> {
     let mut conn = ctx.redis();

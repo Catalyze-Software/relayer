@@ -3,7 +3,7 @@ use std::{str::FromStr, sync::Arc, time::Duration};
 use eyre::Context as _;
 use tokio::select;
 
-use crate::{consumer::QueueKey, context::Context, data};
+use crate::{context::Context, data, services::consumer::QueueKey};
 
 const INITIAL_HISTORY_POINT: u64 = 1;
 

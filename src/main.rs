@@ -11,12 +11,11 @@ use tokio::{
 mod cli;
 mod config;
 mod consts;
-mod consumer;
 mod context;
 mod data;
 mod icp;
 mod matrix;
-mod producer;
+mod services;
 mod types;
 mod utils;
 

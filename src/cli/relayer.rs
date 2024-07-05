@@ -7,7 +7,11 @@ use proxy_types::models::history_event::HistoryEventKind;
 use serde::{Deserialize, Serialize};
 use tokio::task::JoinSet;
 
-use crate::{consumer, context::Context, producer, utils::with_spans};
+use crate::{
+    context::Context,
+    services::{consumer, producer},
+    utils::with_spans,
+};
 
 use super::RunResult;
 
@@ -27,20 +31,22 @@ impl RelayerCmd {
             consumer::handle_group_role,
         );
 
-        set.spawn(with_spans("matrix_sync", async move {
-            let cancel_token = ctx.cancel_token();
-            tokio::select! {
-                _ = cancel_token.cancelled() => {
-                    tracing::info!("Received cancel signal, stopping...");
-                    Ok(())
-                }
-                res = matrix_sync(ctx.clone()) => {
-                    res
-                }
-            }
-        }));
+        set.spawn(with_spans("matrix_sync", matrix_sync_task(ctx.clone())));
 
         set
+    }
+}
+
+pub async fn matrix_sync_task(ctx: Arc<Context>) -> eyre::Result<()> {
+    let cancel_token = ctx.cancel_token();
+    tokio::select! {
+        _ = cancel_token.cancelled() => {
+            tracing::info!("Received cancel signal, stopping...");
+            Ok(())
+        }
+        res = matrix_sync(ctx.clone()) => {
+            res
+        }
     }
 }
 

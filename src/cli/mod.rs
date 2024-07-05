@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use clap::{Parser, Subcommand};
+use matrix_room_migration::MatrixRoomMigrationCmd;
 use relayer::RelayerCmd;
 use serde::{Deserialize, Serialize};
 use tokio::task::JoinSet;
@@ -9,6 +10,7 @@ use crate::context::Context;
 
 pub type RunResult = JoinSet<eyre::Result<()>>;
 
+mod matrix_room_migration;
 mod relayer;
 
 #[derive(Clone, Parser, Debug, Serialize, Deserialize)]
@@ -27,12 +29,18 @@ pub enum Commands {
         #[serde(flatten)]
         cmd: RunCommands,
     },
+    Migrate {
+        #[command(subcommand)]
+        #[serde(flatten)]
+        cmd: MigrateCommands,
+    },
 }
 
 impl Commands {
     pub fn run(self, context: Arc<Context>) -> RunResult {
         match self {
             Commands::Run { cmd } => cmd.run(context),
+            Commands::Migrate { cmd } => cmd.run(context),
         }
     }
 }
@@ -48,6 +56,21 @@ impl RunCommands {
     pub fn run(self, ctx: Arc<Context>) -> RunResult {
         match self {
             RunCommands::Relayer(cmd) => cmd.run(ctx),
+        }
+    }
+}
+
+#[derive(Subcommand, Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub(crate) enum MigrateCommands {
+    /// Migrate matrix rooms state
+    MatrixRoom(MatrixRoomMigrationCmd),
+}
+
+impl MigrateCommands {
+    pub fn run(self, ctx: Arc<Context>) -> RunResult {
+        match self {
+            MigrateCommands::MatrixRoom(cmd) => cmd.run(ctx),
         }
     }
 }
