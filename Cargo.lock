@@ -457,17 +457,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "canister_types"
+name = "catalyze-shared"
 version = "0.1.0"
+source = "git+https://github.com/Catalyze-Software/catalyze-shared.git#c4d04b0e6cb217a2815631770c7ebe7c9f9ae193"
 dependencies = [
  "candid",
  "email_address",
  "ic-cdk",
- "ic-ledger-types",
  "ic-stable-structures",
  "icrc-ledger-types",
  "serde",
  "serde_json",
+ "unicode-segmentation",
 ]
 
 [[package]]
@@ -1524,21 +1525,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ic-ledger-types"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ff0912dee73950385bb95f083b6f0cd6d87bac6be52b7aecce7ea5d2c043f49"
-dependencies = [
- "candid",
- "crc32fast",
- "hex",
- "ic-cdk",
- "serde",
- "serde_bytes",
- "sha2 0.10.8",
-]
-
-[[package]]
 name = "ic-stable-structures"
 version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2561,7 +2547,7 @@ name = "relayer"
 version = "0.1.3"
 dependencies = [
  "candid",
- "canister_types",
+ "catalyze-shared",
  "clap",
  "config",
  "eyre",

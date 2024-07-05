@@ -1,8 +1,8 @@
 use crate::{config::Config, types::CanisterResult};
 use candid::{Encode, Principal};
+use catalyze_shared::{group::GroupResponse, history_event::HistoryEventEntry};
 use eyre::Context;
 use ic_agent::identity::AnonymousIdentity;
-use proxy_types::models::{group::GroupResponse, history_event::HistoryEventEntry};
 
 pub struct ICPClient {
     agent: ic_agent::Agent,

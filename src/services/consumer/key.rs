@@ -1,6 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
-use proxy_types::models::history_event::HistoryEventKind;
+use catalyze_shared::history_event::HistoryEventKind;
 
 #[derive(Debug, Clone)]
 pub struct QueueKey {

@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use candid::{Decode, Encode};
+use catalyze_shared::history_event::HistoryEventEntry;
 use eyre::Context as _;
-use proxy_types::models::history_event::HistoryEventEntry;
 use redis::AsyncCommands;
 
 use crate::{consts::HISTORY_POINT_KEY, context::Context, services::consumer::QueueKey};

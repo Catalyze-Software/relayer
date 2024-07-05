@@ -27,4 +27,4 @@ redis = { version = "0.25", features = ["tokio-comp"] }
 
 matrix-sdk = { version = "0.7", default-features = false, features = ["eyre", "rustls-tls"] }
 
-proxy-types =  { package = "canister_types", path = "crates/proxy/src/canister_types" }
+catalyze-shared =  { git = "https://github.com/Catalyze-Software/catalyze-shared.git" }

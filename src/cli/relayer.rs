@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
+use catalyze_shared::history_event::HistoryEventKind;
 use clap::Args;
 use eyre::Context as _;
 use matrix_sdk::config::SyncSettings;
-use proxy_types::models::history_event::HistoryEventKind;
 use serde::{Deserialize, Serialize};
 use tokio::task::JoinSet;
 

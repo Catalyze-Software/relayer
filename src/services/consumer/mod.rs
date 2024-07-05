@@ -1,7 +1,7 @@
 use std::{future::Future, str::FromStr, sync::Arc, time::Duration};
 
+use catalyze_shared::history_event::{HistoryEventEntry, HistoryEventKind};
 use eyre::Context as _;
-use proxy_types::models::history_event::{HistoryEventEntry, HistoryEventKind};
 use tokio::select;
 
 use crate::{context::Context, data, utils::with_spans};
