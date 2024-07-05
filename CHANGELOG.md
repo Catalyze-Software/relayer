@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Service interface refactored to the CLI interface.
 
+### Removed
+- Proxy git submodule.
+
 ## [0.1.3] - 2024-06-25
 ### Changed
 - Login authentication method changed to username and password.
