@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use clap::Parser;
-use cmd::Opts;
 use config::Config;
 use context::Context;
 use tokio::{
@@ -9,7 +8,7 @@ use tokio::{
     task::JoinError,
 };
 
-mod cmd;
+mod cli;
 mod config;
 mod consts;
 mod consumer;
@@ -23,7 +22,7 @@ mod utils;
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
-    let opts = Opts::parse();
+    let opts = cli::Opts::parse();
     let ctx = Context::new(Config::from_env()?).await?;
 
     utils::init_tracing(ctx.config().log_filter.clone());
