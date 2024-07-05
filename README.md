@@ -65,16 +65,7 @@ To clone this repository, run the following command:
 
 ```shell
 git clone git@github.com:Catalyze-Software/relayer.git
-git submodule update --init --recursive
 ```
-
-`git submodule update --init --recursive` is necessary to clone the submodules in this repository.
-
-Git Submodules are:
-
-- [`proxy`](https://github.com/Catalyze-Software/proxy) - the proxy canister source code, which is
-  used for encoding\decoding the ICP messages (history canister events). In the future, those types
-  will be moved to the separate crate and will be used by the relayer service and the proxy canister.
 
 ## Configuration
 

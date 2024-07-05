@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use clap::{Parser, Subcommand};
 use matrix_room_migration::MatrixRoomMigrationCmd;
-use relayer::RelayerCmd;
+use relayer::RelayerServiceCmd;
 use serde::{Deserialize, Serialize};
 use tokio::task::JoinSet;
 
@@ -49,13 +49,13 @@ impl Commands {
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum RunCommands {
     /// Run the relayer service
-    Relayer(RelayerCmd),
+    Service(RelayerServiceCmd),
 }
 
 impl RunCommands {
     pub fn run(self, ctx: Arc<Context>) -> RunResult {
         match self {
-            RunCommands::Relayer(cmd) => cmd.run(ctx),
+            RunCommands::Service(cmd) => cmd.run(ctx),
         }
     }
 }

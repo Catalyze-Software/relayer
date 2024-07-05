@@ -16,9 +16,9 @@ use crate::{
 use super::RunResult;
 
 #[derive(Clone, Args, Debug, Serialize, Deserialize)]
-pub(crate) struct RelayerCmd;
+pub(crate) struct RelayerServiceCmd;
 
-impl RelayerCmd {
+impl RelayerServiceCmd {
     pub fn run(self, ctx: Arc<Context>) -> RunResult {
         let mut set: JoinSet<eyre::Result<()>> = JoinSet::new();
 
