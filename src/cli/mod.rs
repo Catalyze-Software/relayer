@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use clap::{Parser, Subcommand};
-use matrix_room_migration::MatrixRoomMigrationCmd;
+use matrix_room_migration::MatrixReadOnlyRoomMigrationCmd;
 use relayer::RelayerServiceCmd;
 use serde::{Deserialize, Serialize};
 use tokio::task::JoinSet;
@@ -64,7 +64,7 @@ impl RunCommands {
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum MigrateCommands {
     /// Migrate matrix rooms state
-    MatrixRoom(MatrixRoomMigrationCmd),
+    MatrixRoom(MatrixReadOnlyRoomMigrationCmd),
 }
 
 impl MigrateCommands {

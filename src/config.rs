@@ -32,6 +32,15 @@ pub struct Config {
 
     #[serde(default)]
     pub password: String,
+
+    pub migration: MigrationConfig,
+}
+
+#[serde_as]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MigrationConfig {
+    #[serde(default)]
+    pub dry_run: bool,
 }
 
 impl std::fmt::Display for Config {
