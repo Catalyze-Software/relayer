@@ -1,5 +1,5 @@
 use candid::{CandidType, Decode};
-use proxy_types::models::api_error::ApiError;
+use catalyze_shared::api_error::ApiError;
 use serde::Deserialize;
 
 #[derive(CandidType, Deserialize)]

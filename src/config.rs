@@ -25,9 +25,22 @@ pub struct Config {
     pub matrix_url: String,
 
     #[serde(default)]
+    pub matrix_login_method: MatrixLoginMethod,
+
+    #[serde(default)]
     pub skip_catchup: bool,
 
+    #[serde(default)]
     pub password: String,
+
+    pub migration: MigrationConfig,
+}
+
+#[serde_as]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MigrationConfig {
+    #[serde(default)]
+    pub dry_run: bool,
 }
 
 impl std::fmt::Display for Config {
@@ -52,6 +65,24 @@ fn default_limit() -> u64 {
 
 fn default_ic_url() -> String {
     "https://icp0.io".to_owned()
+}
+
+#[serde_as]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum MatrixLoginMethod {
+    #[default]
+    Password,
+    Jwt,
+}
+
+impl std::fmt::Display for MatrixLoginMethod {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MatrixLoginMethod::Password => write!(f, "password"),
+            MatrixLoginMethod::Jwt => write!(f, "jwt"),
+        }
+    }
 }
 
 impl Config {

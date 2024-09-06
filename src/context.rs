@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use eyre::Context as _;
+use tokio_util::sync::{CancellationToken, WaitForCancellationFuture};
 
 use crate::{config::Config, icp::ICPClient, matrix};
 
@@ -9,6 +10,7 @@ pub struct Context {
     redis_conn: redis::aio::MultiplexedConnection,
     matrix: matrix_sdk::Client,
     icp: ICPClient,
+    cancel_token: CancellationToken,
 }
 
 impl Context {
@@ -30,6 +32,7 @@ impl Context {
             redis_conn,
             matrix,
             icp,
+            cancel_token: CancellationToken::new(),
         }))
     }
 
@@ -47,5 +50,17 @@ impl Context {
 
     pub fn matrix(&self) -> matrix_sdk::Client {
         self.matrix.clone()
+    }
+
+    pub fn cancel_token(&self) -> CancellationToken {
+        self.cancel_token.clone()
+    }
+
+    pub fn cancel(&self) {
+        self.cancel_token.cancel();
+    }
+
+    pub fn cancelled(&self) -> WaitForCancellationFuture<'_> {
+        self.cancel_token.cancelled()
     }
 }

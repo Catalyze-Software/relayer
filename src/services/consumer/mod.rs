@@ -1,7 +1,8 @@
 use std::{future::Future, str::FromStr, sync::Arc, time::Duration};
 
+use catalyze_shared::history_event::{HistoryEventEntry, HistoryEventKind};
 use eyre::Context as _;
-use proxy_types::models::history_event::{HistoryEventEntry, HistoryEventKind};
+use tokio::select;
 
 use crate::{context::Context, data, utils::with_spans};
 
@@ -12,17 +13,17 @@ pub use key::QueueKey;
 
 pub fn spawn<F, Fut>(
     ctx: Arc<Context>,
+    set: &mut tokio::task::JoinSet<eyre::Result<()>>,
     target_kind: HistoryEventKind,
     handler: F,
-) -> tokio::task::JoinHandle<eyre::Result<()>>
-where
+) where
     F: Fn(Arc<Context>, HistoryEventEntry) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = eyre::Result<()>> + Send + 'static,
 {
-    tokio::spawn(with_spans(
+    set.spawn(with_spans(
         &format!("consumer_{}", target_kind),
         run(ctx, target_kind, handler),
-    ))
+    ));
 }
 
 async fn run<F, Fut>(
@@ -42,9 +43,15 @@ where
         let ctx = ctx.clone();
         tracing::debug!("Trying to get history events from the redis");
 
-        let events = data::get_events(ctx.clone(), key.clone())
-            .await
-            .wrap_err("Failed to get history events from the redis")?;
+        let events = select! {
+            res = data::get_events(ctx.clone(), key.clone()) => res,
+            _ = ctx.cancelled() => {
+                tracing::info!("Received cancel signal, stopping...");
+                return Ok(());
+            }
+        };
+
+        let events = events.wrap_err("Failed to get history events from the redis")?;
 
         tracing::debug!("Got {} event(s)", events.len());
 

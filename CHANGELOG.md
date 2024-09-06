@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Test for the matrix client creation.
+- Ability to set the matrix client login method.
+- Matrix room state migrator service.
+- Graceful shutdown.
+
+### Changed
+- Service interface refactored to the CLI interface.
+
+### Removed
+- Proxy git submodule.
 
 ## [0.1.3] - 2024-06-25
 ### Changed

@@ -1,3 +1,0 @@
-[submodule "crates/proxy"]
-	path = crates/proxy
-	url = git@github.com:Catalyze-Software/proxy.git

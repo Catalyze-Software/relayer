@@ -1,8 +1,8 @@
 use std::{str::FromStr, sync::Arc};
 
+use catalyze_shared::history_event::{GroupRoleChanged, HistoryEventEntry};
 use eyre::Context as _;
 use matrix_sdk::ruma::RoomId;
-use proxy_types::models::history_event::{GroupRoleChanged, HistoryEventEntry};
 
 use crate::{
     context::Context,

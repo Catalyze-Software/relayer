@@ -65,16 +65,7 @@ To clone this repository, run the following command:
 
 ```shell
 git clone git@github.com:Catalyze-Software/relayer.git
-git submodule update --init --recursive
 ```
-
-`git submodule update --init --recursive` is necessary to clone the submodules in this repository.
-
-Git Submodules are:
-
-- [`proxy`](https://github.com/Catalyze-Software/proxy) - the proxy canister source code, which is
-  used for encoding\decoding the ICP messages (history canister events). In the future, those types
-  will be moved to the separate crate and will be used by the relayer service and the proxy canister.
 
 ## Configuration
 
@@ -115,6 +106,9 @@ Where:
   history canister events.
 - `matrix_url` or `RELAYER_MATRIX_URL` is the Matrix server URL, which is used for sending the
   messages to the Matrix server.
+- `matrix_login_method` or `RELAYER_MATRIX_LOGIN_METHOD` is the Matrix login method, which is used
+  for logging in to the Matrix server. The login method can be `password` or `token`. The login
+  method is `password` by default.
 - `redis_url` or `RELAYER_REDIS_URL` is the Redis URL, which is used for queuing the history events.
 - `skip_catchup` or `RELAYER_SKIP_CATCHUP` is the flag to skip the catchup process. The catchup
   process is responsible for catching up the missed events from the history canister. The catchup
@@ -151,7 +145,7 @@ sh scripts/build.sh
 To run the relayer service, run the following command:
 
 ```shell
-cargo run --bin relayer
+cargo run --bin relayer run service
 ```
 
 The command will run the relayer service. But you still need to run redis server somewhere, this
@@ -173,6 +167,14 @@ volumes:
   redis-data:
 ```
 
+### Run migrations
+
+To run the matrix migrations, run the following command:
+
+```shell
+cargo run --bin relayer migrate matrix-room
+```
+
 ### Docker-Compose
 
 To run the Docker container, create docker-compose.yml file:
@@ -186,6 +188,7 @@ services:
     restart: always
     volumes:
       - ./config.toml:/config.toml
+    entrypoint: sh -c "relayer run service"
 
   redis:
     image: redis:7.2
